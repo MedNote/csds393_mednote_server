@@ -53,7 +53,7 @@ const RecordType = new GraphQLObjectType({
   fields:()=>({
     uuid:{type:GraphQLString},
     name:{type:nameType},
-    DOB:{type:GraphQLString},
+    dob:{type:GraphQLString},
     allergies:{
       type:new GraphQLList(GraphQLString)
       //resolve: ()=> getItems(),
@@ -98,9 +98,9 @@ const RootQuery = new GraphQLObjectType({
       type:RecordType,
       args:{UUID:{type:GraphQLID}, date:{type: GraphQLDateTime}},
       resolve(parent,args){	
-        console.log(args);
+        // console.log(args);
         return MedNote.findOne({
-          // uuid: args.UUID,
+          uuid: args.UUID,
           "immunizations.date": {
               // $gte: new Date(new Date(2012, 7, 14).setHours(00, 00, 00))
               $gte: new Date(args.date)
@@ -128,7 +128,7 @@ const Mutation = new GraphQLObjectType({
       args:{
         uuid: {type: GraphQLString},
         name: {type: nameInputType},
-        DOB: {type: GraphQLString},
+        dob: {type: GraphQLString},
         allergies: {type: new GraphQLList(GraphQLString)},
         medications: {type: new GraphQLList(GraphQLString)},
         immunizations: {type: new GraphQLList(immInputType)}
@@ -137,7 +137,7 @@ const Mutation = new GraphQLObjectType({
         let mednote = new MedNote({
           uuid: args.uuid,
           name: args.name,
-          DOB: args.DOB,
+          dob: args.dob,
           allergies: args.allergies,
           medications: args.medications,
           immunizations: args.immunizations
@@ -151,15 +151,47 @@ const Mutation = new GraphQLObjectType({
       args:{
         uuid: {type: GraphQLString},
         name: {type: nameInputType},
-        DOB: {type: GraphQLString},
+        dob: {type: GraphQLString},
         allergies: {type: new GraphQLList(GraphQLString)},
         medications: {type: new GraphQLList(GraphQLString)},
         immunizations: {type: new GraphQLList(immInputType)}
       },
       resolve(parent,args){
+        if(args.name == {})
+          args.name = MedNote.findById(args.uuid).name;
+        if(args.dob == {})
+          args.dob = MedNote.findById(args.uuid).dob;
+        if(args.allergies == {})
+          args.allergies = MedNote.findById(args.uuid).allergies;
+        if(args.medications == {})
+          args.medications = MedNote.findById(args.uuid).medications;
+        if(args.immunizations == {})
+          args.immunizations = MedNote.findById(args.uuid).immunizations;
         return MedNote.findOneAndUpdate(
           {"uuid": args.uuid},
-          { "$set":{name: args.name, DOB: args.DOB, allergies: args.allergies, medications: args.medications, immunizations: args.immunizations}},
+          { "$set":{name: args.name, dob: args.dob, allergies: args.allergies, medications: args.medications, immunizations: args.immunizations}},
+          {"new": true});
+      }
+    },
+
+    appendRecord:{
+      type: RecordType,
+      args:{
+        uuid: {type: GraphQLString},
+        name: {type: nameInputType},
+        dob: {type: GraphQLString},
+        allergies: {type: new GraphQLList(GraphQLString)},
+        medications: {type: new GraphQLList(GraphQLString)},
+        immunizations: {type: new GraphQLList(immInputType)}
+      },
+      resolve(parent,args){
+        // let args.name = {MedNote.findById(args.uuid).name, args.name};
+        args.allergies.push(MedNote.findById(args.uuid).allergies);
+        args.medications.push(MedNote.findById(args.uuid).medications);
+        args.immunizations.push(MedNote.findById(args.uuid).immunizations);
+        return MedNote.findOneAndUpdate(
+          {"uuid": args.uuid},
+          { "$set":{name: args.name, dob: args.dob, allergies: args.allergies, medications: args.medications, immunizations: args.immunizations}},
           {"new": true});
       }
     }

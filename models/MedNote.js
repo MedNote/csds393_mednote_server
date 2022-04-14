@@ -13,7 +13,7 @@ const MedNoteSchema = new Schema({
             type: String
         }
     },
-    DOB: String,
+    dob: String,
     allergies: [{
         type: String
     }],
