@@ -78,29 +78,29 @@ const RootQuery = new GraphQLObjectType({
   fields:{
     record_by_id:{
       type:RecordType,
-      args:{UUID:{type:GraphQLID}},
+      args:{uuid:{type:GraphQLID}},
       resolve(parent,args){	
-        found = MedNote.findById(args.UUID);
+        found = MedNote.findById(args.uuid);
         return found;
       }
     },
     record_by_uuid:{
       type:RecordType,
-      args:{UUID:{type:GraphQLString}},
+      args:{uuid:{type:GraphQLString}},
       resolve(parent,args){	
         let found = MedNote.findOne({
-          uuid: args.UUID
+          uuid: args.uuid
         });
         return found;
       }
     },
     record_after_date:{
       type:RecordType,
-      args:{UUID:{type:GraphQLID}, date:{type: GraphQLDateTime}},
+      args:{uuid:{type:GraphQLID}, date:{type: GraphQLDateTime}},
       resolve(parent,args){	
         // console.log(args);
         return MedNote.findOne({
-          uuid: args.UUID,
+          uuid: args.uuid,
           "immunizations.date": {
               // $gte: new Date(new Date(2012, 7, 14).setHours(00, 00, 00))
               $gte: new Date(args.date)
@@ -185,14 +185,17 @@ const Mutation = new GraphQLObjectType({
         immunizations: {type: new GraphQLList(immInputType)}
       },
       resolve(parent,args){
-        // let args.name = {MedNote.findById(args.uuid).name, args.name};
-        args.allergies.push(MedNote.findById(args.uuid).allergies);
-        args.medications.push(MedNote.findById(args.uuid).medications);
-        args.immunizations.push(MedNote.findById(args.uuid).immunizations);
-        return MedNote.findOneAndUpdate(
+        MedNote.updateOne(
           {"uuid": args.uuid},
-          { "$set":{name: args.name, dob: args.dob, allergies: args.allergies, medications: args.medications, immunizations: args.immunizations}},
-          {"new": true});
+          {
+            $push: {
+              allergies: args.allergies
+            }
+        }).exec();
+        let found = MedNote.findOne({
+          uuid: args.uuid
+        });
+        return found;
       }
     }
   }
