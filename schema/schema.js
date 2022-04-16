@@ -104,7 +104,7 @@ const RootQuery = new GraphQLObjectType({
     },
     record_after_date:{
       type:RecordType,
-      args:{uuid:{type:GraphQLID}, date:{type: GraphQLDateTime}},
+      args:{uuid:{type:GraphQLString}, date:{type: GraphQLDateTime}},
       resolve(parent,args){	
         // console.log(args);
         return MedNote.findOne({
