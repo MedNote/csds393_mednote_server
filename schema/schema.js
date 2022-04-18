@@ -1,6 +1,7 @@
 const graphql = require('graphql');
 const _=require('lodash');
 const MedNote = require('../models/MedNote');
+const SymmetricKey = require('../models/SymmetricKey');
 var moment = require('moment');
 
 const {GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLInputObjectType} = graphql;
@@ -81,6 +82,14 @@ const RecordType = new GraphQLObjectType({
   })
 });
 
+const SymmetricKeyType = new GraphQLObjectType({
+  name: 'SymmetricKey',
+  fields:()=>({
+    uuid: {type:GraphQLString},
+    symmetric_key: {type:GraphQLString}
+  })
+});
+
 const RootQuery = new GraphQLObjectType({
   name:'RootQueryType',
   fields:{
@@ -123,6 +132,15 @@ const RootQuery = new GraphQLObjectType({
       //         console.log("First function call : ", docs);
       //     }
       // }
+      }
+    }, 
+    get_key_for_uuid:{
+      type: SymmetricKeyType,
+      args:{uuid: {type:GraphQLString}},
+      resolve(parent,args){
+        return SymmetricKey.findOne({
+          uuid: args.uuid
+        });
       }
     }
   }
@@ -213,6 +231,27 @@ const Mutation = new GraphQLObjectType({
           uuid: args.uuid
         });
         return found;
+      }
+    },
+    add_key_for_uuid:{
+      type: SymmetricKeyType,
+      args:{uuid: {type:GraphQLString}, symmetric_key: {type: GraphQLString}},
+      resolve(parent,args){
+        let keyRecord = new SymmetricKey({
+          uuid: args.uuid,
+          symmetric_key: args.symmetric_key
+        });
+        return keyRecord.save();
+      }
+    },
+    set_key_for_uuid:{
+      type: SymmetricKeyType,
+      args:{uuid: {type:GraphQLString}, symmetric_key: {type: GraphQLString}},
+      resolve(parent,args){
+        return SymmetricKey.findOneAndUpdate(
+          {"uuid": args.uuid},
+          {"$set":{symmetric_key: args.symmetric_key}},
+          {"new": true});
       }
     }
   }
